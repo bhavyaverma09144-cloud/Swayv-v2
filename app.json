@@ -1,8 +1,12 @@
 {
   "expo": {
-    "name": "Swayv-v2",
+    "name": "Swayv",
     "slug": "Swayv-v2",
+    "scheme": "swayv",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,15 +15,62 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#16171E"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_AUDIO"
+      ],
+      "package": "com.bhavya_verma.Swayvv2"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "android": {
+            "notification": {
+              "icon": "./assets/icon.png",
+              "color": "#16171E"
+            }
+          }
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Swayv to scan your device storage for audio tracks.",
+          "savePhotosPermission": "Allow Swayv to manage audio layouts.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#16171E"
+        }
+      ],
+      "expo-video",
+      "expo-asset",
+      "expo-font",
+      "expo-status-bar",
+      "@react-native-vector-icons/ionicons"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b2c525ba-e286-475c-9d6d-fb7cd048d441"
+      }
     }
   }
 }
