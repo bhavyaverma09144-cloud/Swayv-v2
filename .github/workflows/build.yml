@@ -1,7 +1,7 @@
 name: Expo Free Cloud Build
 on:
   push:
-    branches: [ main ] # Triggers build every time you push code to 'main'
+    branches: [ main ]
 
 jobs:
   build:
@@ -13,9 +13,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-node-version: 20
+          node-version: 20  # Fixed the 'node-node-version' typo
 
-      - name: Setup EAS CLI
+      # This completely bypasses the extension mismatch by manually forcing the newest version
+      - name: Install Latest EAS CLI Manually
+        run: npm install -g eas-cli
+
+      - name: Expo Login Authentication
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
