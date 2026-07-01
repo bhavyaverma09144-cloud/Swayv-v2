@@ -4,21 +4,18 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "installCommand": "npm install --legacy-peer-deps"
+      }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "installCommand": "npm install --legacy-peer-deps"
+      }
     },
     "production": {
       "android": {
         "buildType": "apk"
-      },
-      "installCommand": "npm install --legacy-peer-deps"
+      }
     }
   }
 }
