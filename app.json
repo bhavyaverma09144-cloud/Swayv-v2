@@ -2,6 +2,7 @@
   "expo": {
     "name": "Swayv",
     "slug": "Swayv-v2",
+    "owner": "bhavyaverma09144-cloud",
     "scheme": "swayv",
     "version": "1.0.0",
     "runtimeVersion": {
