@@ -15,6 +15,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
       - name: Upgrade EAS CLI Tool
         run: npm install -g eas-cli
 
@@ -27,6 +33,12 @@ jobs:
       - name: Install Project Dependencies
         run: npm install
 
-      - name: Trigger EAS Build
-        run: eas build --platform android --profile production --non-interactive
+      - name: Trigger Local EAS Build
+        run: eas build --platform android --profile production --local --non-interactive --output=./swayv-production.apk
 
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swayv-production-apk
+          path: ./swayv-production.apk
