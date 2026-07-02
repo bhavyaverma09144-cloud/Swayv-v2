@@ -29,3 +29,4 @@ jobs:
 
       - name: Trigger EAS Build
         run: eas build --platform android --profile production --non-interactive
+
