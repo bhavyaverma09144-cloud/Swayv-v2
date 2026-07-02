@@ -1,10 +1,11 @@
 // app/(tabs)/_layout.tsx
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 import Ionicons from '@react-native-vector-icons/ionicons';
+import { useSharedValue } from 'react-native-reanimated';
 
 import { 
   useFonts, 
@@ -21,6 +22,7 @@ import { Syne_400Regular, Syne_700Bold } from '@expo-google-fonts/syne';
 
 import AnimatedButton from '../../src/components/AnimatedButton';
 import { useAppTheme } from '../../src/context/ThemeContext';
+import AudioPlayerOverlay from '../../src/components/AudioPlayerOverlay';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -112,6 +114,9 @@ function CustomTabBar(props: any) {
 }
 
 export default function TabsLayout() {
+  const pathname = usePathname();
+  const expansionProgress = useSharedValue(0);
+
   const [fontsLoaded, fontError] = useFonts({
     'AppFont-Light': PlusJakartaSans_300Light,
     'AppFont-Regular': PlusJakartaSans_400Regular,
@@ -137,29 +142,57 @@ export default function TabsLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
+  // Check if current route is settings - hide overlay on settings
+  const isSettings = pathname === '/settings';
+
   return (
-    <Tabs
-      screenOptions={{ headerShown: false }}
-      tabBar={(props) => <CustomTabBar {...props} />}
-    />
+    <View style={styles.container}>
+      <View style={styles.contentContainer}>
+        <Tabs
+          screenOptions={{ headerShown: false }}
+          tabBar={(props) => <CustomTabBar {...props} />}
+        />
+      </View>
+      {/* Player overlay - positioned above tab bar */}
+      {!isSettings && (
+        <View style={styles.overlayWrapper}>
+          <AudioPlayerOverlay expansionProgress={expansionProgress} />
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    position: 'relative',
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  overlayWrapper: {
+    position: 'absolute',
+    bottom: 105, // Height of tab bar (adjust based on your tab bar height)
+    left: 0,
+    right: 0,
+    zIndex: -.5,
+  },
   tabBarContainer: { 
     flexDirection: 'row', 
     borderTopWidth: 1, 
     height: 105, 
     paddingBottom: 25, 
     alignItems: 'center', 
-    paddingHorizontal: 10 
+    paddingHorizontal: 10,
+    zIndex: 1,
   },
   buttonWrapper: { 
     flex: 1, 
     alignItems: 'center', 
     justifyContent: 'center', 
     height: '100%', 
-    zIndex: 2 
+    zIndex: 2
   },
   tabItemContainer: { 
     alignItems: 'center', 

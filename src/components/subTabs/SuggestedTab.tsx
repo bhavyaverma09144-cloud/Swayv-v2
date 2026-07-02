@@ -3,9 +3,9 @@ import React, { memo } from 'react';
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from 'expo-router';
-import { useAudio } from '../context/AudioContext';
-import { useAppTheme } from '../context/ThemeContext';
-import AnimatedButton from '../components/AnimatedButton';
+import { useAudio } from '../../context/AudioContext';
+import { useAppTheme } from '../../context/ThemeContext';
+import AnimatedButton from '../../components/AnimatedButton';
 
 function SuggestedTab() {
   const { 

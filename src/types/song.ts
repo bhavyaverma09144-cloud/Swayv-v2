@@ -1,18 +1,20 @@
 // src/types/song.ts
 export interface Song {
   id: string;
-  uri: string;              // File URI (for playback)
-  filename: string;         // Original filename
-  duration: number;         // In seconds
+  uri: string;
+  filename: string;
+  duration: number;
   
-  // Editable fields (user can change these)
-  title: string;            // Default: filename without extension
-  artist: string;           // Default: "Unknown Artist"
-  album: string;            // Default: "Unknown Album"
-  artwork?: string;         // Base64 or path (user can add)
+  // Editable fields (user can edit these)
+  title: string;
+  artist: string;
+  album: string;
+  genre?: string;
+  year?: string;
+  artwork?: string | null; // base64 image data URL or color string
   
   // System fields
-  asset?: string;           // Legacy support for require() assets
+  asset?: string;
   fileSize?: number;
   modifiedAt: number;
   addedToLibraryAt: number;

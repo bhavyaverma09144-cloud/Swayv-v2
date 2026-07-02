@@ -1,6 +1,6 @@
 // src/components/AudioPlayerOverlay.tsx
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, ScrollView } from 'react-native';
+import React, { useRef, memo } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, ScrollView, Image } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import Animated, {
   useAnimatedStyle,
@@ -103,7 +103,7 @@ function MainProgressBar({ progressWidth, position, duration, seekTo, activeColo
   );
 }
 
-export default function AudioPlayerOverlay({ expansionProgress }: PlayerProps) {
+export default memo(function AudioPlayerOverlay({ expansionProgress }: PlayerProps) {
   const {
     isPlaying,
     showOverlay,
@@ -166,7 +166,10 @@ export default function AudioPlayerOverlay({ expansionProgress }: PlayerProps) {
   }));
 
   const activeTitle = currentSong ? currentSong.title : "No Track Selected";
-  const activeArtist = currentSong?.artist || "Unknown Artist";
+  const activeArtist = currentSong ? currentSong.artist : "Unknown Artist";
+
+  // Check if track has a raw image path saved down on disk or remote network endpoint
+  const hasValidImage = currentSong?.artwork && !currentSong.artwork.startsWith('hsl');
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -185,8 +188,12 @@ export default function AudioPlayerOverlay({ expansionProgress }: PlayerProps) {
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
             >
-              <View style={[styles.largeArtMock, { backgroundColor: activeColors.surface }]}>
-                <Ionicons name="musical-notes" size={92} color={activeColors.textSecondary} />
+              <View style={[styles.largeArtMock, { backgroundColor: currentSong?.artwork && currentSong.artwork.startsWith('hsl') ? activeColors.surface : (currentSong?.artwork || activeColors.surface) }]}>
+                {hasValidImage ? (
+                  <Image source={{ uri: currentSong.artwork }} style={styles.largeArtImage} />
+                ) : (
+                  <Ionicons name="musical-notes" size={92} color={currentSong?.artwork?.startsWith('hsl') ? "#FFFFFF" : activeColors.textSecondary} />
+                )}
               </View>
 
               <Text style={[styles.expandedTrackTitle, { color: activeColors.textPrimary }]}>{activeTitle}</Text>
@@ -248,8 +255,12 @@ export default function AudioPlayerOverlay({ expansionProgress }: PlayerProps) {
               </View>
               <View style={styles.overlayMainRow}>
                 <View style={styles.songMetadata}>
-                  <View style={[styles.miniArtMock, { backgroundColor: activeColors.surface, borderColor: activeColors.border }]}>
-                    <Ionicons name="musical-notes" size={22} color={activeColors.textSecondary} />
+                  <View style={[styles.miniArtMock, { backgroundColor: currentSong?.artwork && currentSong.artwork.startsWith('hsl') ? activeColors.surface : (currentSong?.artwork || activeColors.surface) }]}>
+                    {hasValidImage ? (
+                      <Image source={{ uri: currentSong.artwork }} style={styles.miniArtImage} />
+                    ) : (
+                      <Ionicons name="musical-notes" size={22} color={currentSong?.artwork?.startsWith('hsl') ? "#FFFFFF" : activeColors.textSecondary} />
+                    )}
                   </View>
                   <View style={styles.textStack}>
                     <Text style={[styles.overlayTrackTitle, { color: activeColors.textPrimary }]} numberOfLines={1}>{activeTitle}</Text>
@@ -281,7 +292,7 @@ export default function AudioPlayerOverlay({ expansionProgress }: PlayerProps) {
       </Animated.View>
     </GestureDetector>
   );
-}
+});
 
 const styles = StyleSheet.create({
   shadowContainer: { 
@@ -306,6 +317,12 @@ const styles = StyleSheet.create({
     marginRight: 13,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden'
+  },
+  miniArtImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover'
   },
   textStack: { flex: 1, justifyContent: 'center' },
   overlayTrackTitle: { fontSize: 13, fontFamily: 'AppFont-Medium' },
@@ -345,6 +362,12 @@ const styles = StyleSheet.create({
     marginBottom: 26,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden'
+  },
+  largeArtImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   expandedTrackTitle: { 
     fontSize: 23, 

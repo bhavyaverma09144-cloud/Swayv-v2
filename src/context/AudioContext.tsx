@@ -155,7 +155,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   const addToRecentlyPlayed = (song: Song) => {
     setRecentlyPlayed(prev => {
       const filtered = prev.filter(s => s.id !== song.id);
-      return [song, ...filtered].slice(0, 20);
+      return [song, ...filtered].slice(0, 5);
     });
   };
 

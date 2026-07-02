@@ -1,23 +1,24 @@
-// app/(tabs)/index.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import SuggestedTab from '../../src/components/SuggestedTab';
-import CommonTabPlaceholder from '../../src/components/CommonTabPlaceholder';
-import AudioPlayerOverlay from '../../src/components/AudioPlayerOverlay';
 import { useAppTheme } from '../../src/context/ThemeContext';
 
+// Import newly separated tabs
+import SuggestedTab from '../../src/components/subTabs/SuggestedTab';
+import ArtistsTab from '../../src/components/subTabs/ArtistsTab';
+import SongsTab from '../../src/components/subTabs/SongsTab';
+import AlbumsTab from '../../src/components/subTabs/AlbumsTab';
+import PlaylistsTab from '../../src/components/subTabs/PlaylistsTab';
+
 const topTabSpringConfig = { damping: 25, stiffness: 800, mass: 0.5 };
-const TOP_TABS = ['Suggested', 'Artists', 'Songs', 'Albums', 'Folders'];
+const TOP_TABS = ['Suggested', 'Artists', 'Songs', 'Albums', 'Playlists'];
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState(0);
   const [tabLayouts, setTabLayouts] = useState<Record<number, { x: number; width: number }>>({});
-  const expansionProgress = useSharedValue(0);
-
   const { currentTheme: activeColors } = useAppTheme();
 
   const animatedIndicatorStyle = useAnimatedStyle(() => {
@@ -27,6 +28,17 @@ export default function HomeScreen() {
       width: withSpring(currentLayout ? currentLayout.width : 0, topTabSpringConfig),
     };
   }, [tabLayouts, activeTab]);
+
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case 0: return <SuggestedTab />;
+      case 1: return <ArtistsTab />;
+      case 2: return <SongsTab />;
+      case 3: return <AlbumsTab />;
+      case 4: return <PlaylistsTab />;
+      default: return <SuggestedTab />;
+    }
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -75,34 +87,23 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* Modular Content Selector */}
+        {/* Content View Container */}
         <View style={styles.contentContainer}>
-          {activeTab === 0 ? (
-            <SuggestedTab />
-          ) : (
-            <CommonTabPlaceholder title={TOP_TABS[activeTab]} />
-          )}
+          {renderActiveTabContent()}
         </View>
-
-        {/* Global Floating Player Sheet */}
-        <AudioPlayerOverlay expansionProgress={expansionProgress} />
-
       </SafeAreaView>
     </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-  },
+  container: { flex: 1 },
   headerRow: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    paddingHorizontal: 24, 
-    paddingTop: 30, 
-    paddingBottom: 15 
+    paddingHorizontal: 24,
+    paddingBottom: 15,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
   icon: { marginRight: 5 },

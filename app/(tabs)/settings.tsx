@@ -39,7 +39,7 @@ export default function SettingsScreen() {
             <Ionicons name="person" size={28} color={activeColors.textSecondary} />
           </View>
           <View>
-            <Text style={[styles.profileName, { color: activeColors.textPrimary }]}>Alex Mercer</Text>
+            <Text style={[styles.profileName, { color: activeColors.textPrimary }]}>Bhavya Verma</Text>
             <Text style={[styles.profileStatus, { color: activeColors.textSecondary }]}>Premium Listener</Text>
           </View>
         </View>
