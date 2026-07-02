@@ -15,7 +15,6 @@ jobs:
         with:
           node-version: 20
 
-      # This forces the cloud server to update EAS to the latest version before doing anything else
       - name: Upgrade EAS CLI Tool
         run: npm install -g eas-cli
 
@@ -29,4 +28,4 @@ jobs:
         run: npm install
 
       - name: Trigger EAS Build
-        run: eas build --platform android --profile development --non-interactive
+        run: eas build --platform android --profile production --non-interactive
