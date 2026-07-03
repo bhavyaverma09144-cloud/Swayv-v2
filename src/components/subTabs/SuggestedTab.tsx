@@ -75,7 +75,7 @@ function SuggestedTab() {
           onPress={() => navigation.navigate('favorite')} 
         >
           <Ionicons 
-            name="chevron-up" 
+            name="chevron-down" 
             size={24}
             color={activeColors.textPrimary}
           />
