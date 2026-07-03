@@ -52,12 +52,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: swayv-production-apk
-          path: ./swayv-production.apk      - name: Trigger Local EAS Build
-        run: eas build --platform android --profile production --local --non-interactive --output=./swayv-production.apk
-
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: swayv-production-apk
           path: ./swayv-production.apk
