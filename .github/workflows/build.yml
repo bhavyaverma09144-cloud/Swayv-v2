@@ -13,14 +13,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22 # Updated to fix the Node 20 deprecation warning
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle'
+          # Removed the automatic gradle cache from here to prevent the crash
+
+      # Smart Caching: This targets the Gradle folders directly and hooks into package-lock.json
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Upgrade EAS CLI Tool
         run: npm install -g eas-cli
@@ -35,6 +46,13 @@ jobs:
         run: npm install
 
       - name: Trigger Local EAS Build
+        run: eas build --platform android --profile production --local --non-interactive --output=./swayv-production.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swayv-production-apk
+          path: ./swayv-production.apk      - name: Trigger Local EAS Build
         run: eas build --platform android --profile production --local --non-interactive --output=./swayv-production.apk
 
 
