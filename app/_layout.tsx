@@ -6,7 +6,7 @@ import { ThemeProvider } from '../src/context/ThemeContext';
 
 export default function RootLayout() {
   return (
-    <GestureHandlrRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <AudioProvider>
           <Stack screenOptions={{ headerShown: false }}>
