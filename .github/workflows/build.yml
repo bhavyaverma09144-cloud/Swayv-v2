@@ -10,34 +10,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Uses the latest stable Node version to prevent deprecation warnings
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22 # Updated to fix the Node 20 deprecation warning
+          node-version: 22
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-          # Removed the automatic gradle cache from here to prevent the crash
 
-      # Smart Caching: This targets the Gradle folders directly and hooks into package-lock.json
-      - name: Cache Gradle Dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Enable Global Gradle Caching
-        run: |
-          mkdir -p ~/.gradle
-          echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
-          echo "org.gradle.parallel=true" >> ~/.gradle/gradle.properties
+      # Official Gradle tool that automatically handles advanced caching for native Android code
+      - name: Setup and Smart-Cache Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Upgrade EAS CLI Tool
         run: npm install -g eas-cli
@@ -52,10 +39,11 @@ jobs:
         run: npm install
 
       - name: Trigger Local EAS Build
-        run: eas build --platform android --profile production --local --non-interactive --output=./swayv-production.apk
+        run: eas build --platform android --profile development --local --non-interactive --output=./swayv-development.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: swayv-production-apk
-          path: ./swayv-production.apk
+          name: swayv-development-apk
+          path: ./swayv-development.apk
+          
