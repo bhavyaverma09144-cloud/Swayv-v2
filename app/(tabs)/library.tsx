@@ -1,14 +1,14 @@
 // app/(tabs)/library.tsx
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatList, Image } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useLibrary } from '../../src/context/LibraryContext';
 import { useAppTheme } from '../../src/context/ThemeContext';
 import { useAudio } from '../../src/context/AudioContext';
-import { song as SongType } from '../types/song'; // Aliasing to distinguish from item naming if lowercase
+import { Song } from '../types/song'; 
 
 interface RenderItemProps {
-  item: typeof SongType;
+  item: Song;
 }
 
 export default function LibraryScreen() {
@@ -21,13 +21,45 @@ export default function LibraryScreen() {
     setViewMode(prev => (prev === 'list' ? 'grid' : 'list'));
   };
 
-  // Wrapped in useCallback to preserve component instance memory states across state flips
-  const renderGridItem = useCallback(({ item: song }: RenderItemProps) => {
+  const sections = useMemo(() => {
+    const groups: { [key: string]: Song[] } = {};
+
+    songs.forEach((song) => {
+      let folderName = (song as any).folder;
+      
+      if (!folderName && song.uri) {
+        const parts = song.uri.split('/');
+        if (parts.length > 1) {
+          
+          try {
+            folderName = decodeURIComponent(parts[parts.length - 2]);
+          } catch (e) {
+            folderName = parts[parts.length - 2]; 
+          }
+        }
+      }
+      
+      folderName = folderName || 'Internal Storage';
+
+      if (!groups[folderName]) {
+        groups[folderName] = [];
+      }
+      groups[folderName].push(song);
+    });
+
+    return Object.keys(groups).map(folder => ({
+      folderName: folder,
+      data: groups[folder],
+    }));
+  }, [songs]);
+
+  const renderGridItem = useCallback((song: Song) => {
     const isHslArtwork = song.artwork && song.artwork.startsWith('hsl');
     const artworkBg = isHslArtwork ? activeColors.border : (song.artwork || activeColors.border);
 
     return (
       <Pressable
+        key={song.id}
         style={[styles.songCard, { backgroundColor: activeColors.surface }]}
         onPress={() => handlePlayPause(song)}
       >
@@ -50,12 +82,13 @@ export default function LibraryScreen() {
     );
   }, [activeColors, handlePlayPause]);
 
-  const renderListItem = useCallback(({ item: song }: RenderItemProps) => {
+  const renderListItem = useCallback((song: Song) => {
     const isHslArtwork = song.artwork && song.artwork.startsWith('hsl');
     const artworkBg = isHslArtwork ? activeColors.border : (song.artwork || activeColors.border);
 
     return (
       <Pressable
+        key={song.id}
         style={[styles.listItem, { backgroundColor: activeColors.surface, borderColor: activeColors.border }]}
         onPress={() => handlePlayPause(song)}
       >
@@ -82,6 +115,12 @@ export default function LibraryScreen() {
       </Pressable>
     );
   }, [activeColors, handlePlayPause]);
+
+  const chunkArray = (arr: Song[], size: number) => {
+    return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+      arr.slice(i * size, i * size + size)
+    );
+  };
 
   if (isLoading) {
     return (
@@ -124,32 +163,47 @@ export default function LibraryScreen() {
             </Text>
           </View>
         </ScrollView>
-      ) : viewMode === 'grid' ? (
-        <FlatList
-          key="grid"
-          data={songs}
-          renderItem={renderGridItem}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.gridContent}
-          showsVerticalScrollIndicator={false}
-          columnWrapperStyle={styles.gridRow}
-        />
       ) : (
-        <FlatList
-          key="list"
-          data={songs}
-          renderItem={renderListItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+        <ScrollView 
           showsVerticalScrollIndicator={false}
-        />
+          contentContainerStyle={viewMode === 'grid' ? styles.gridContent : styles.listContent}
+        >
+          {sections.map((section) => (
+            <View key={section.folderName} style={styles.folderSection}>
+              {/* Folder Header */}
+              <View style={styles.folderHeader}>
+                <Ionicons name="folder-open" size={18} color={activeColors.accent} />
+                <Text style={[styles.folderTitle, { color: activeColors.textPrimary }]}>
+                  {section.folderName}
+                </Text>
+                <Text style={[styles.folderCount, { color: activeColors.textSecondary }]}>
+                  ({section.data.length})
+                </Text>
+              </View>
+
+              {/* Render items inside folder based on Grid vs List layout */}
+              {viewMode === 'grid' ? (
+                <View style={styles.gridWrapper}>
+                  {chunkArray(section.data, 2).map((row, rowIndex) => (
+                    <View key={rowIndex} style={styles.gridRow}>
+                      {row.map((song) => renderGridItem(song))}
+                      {row.length === 1 && <View style={styles.songCardFiller} />}
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View>
+                  {section.data.map((song) => renderListItem(song))}
+                </View>
+              )}
+            </View>
+          ))}
+        </ScrollView>
       )}
     </View>
   );
 }
 
-// ... styles object remains unchanged ...
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
@@ -186,11 +240,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'AppFont-Medium',
   },
+  folderSection: {
+    marginBottom: 24,
+  },
+  folderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    paddingBottom: 4,
+  },
+  folderTitle: {
+    fontSize: 16,
+    fontFamily: 'AppFont-Bold',
+  },
+  folderCount: {
+    fontSize: 13,
+    fontFamily: 'AppFont-Regular',
+  },
   gridContent: {
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
+  gridWrapper: {
+    flexDirection: 'column',
+  },
   gridRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
@@ -199,6 +275,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     alignItems: 'center',
+  },
+  songCardFiller: {
+    width: '47%',
+    backgroundColor: 'transparent',
   },
   artworkPlaceholder: {
     width: '100%',
