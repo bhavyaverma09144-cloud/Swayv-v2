@@ -38,12 +38,12 @@ jobs:
       - name: Install Project Dependencies
         run: npm install
 
+      # Switched profile to production and updated output name
       - name: Trigger Local EAS Build
-        run: eas build --platform android --profile development --local --non-interactive --output=./swayv-development.apk
+        run: eas build --platform android --profile production --local --non-interactive --output=./swayv-production.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: swayv-development-apk
-          path: ./swayv-development.apk
-          
+          name: swayv-production-apk
+          path: ./swayv-production.apk
