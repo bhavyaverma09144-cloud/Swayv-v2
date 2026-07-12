@@ -12,8 +12,11 @@ export interface Song {
   genre?: string;
   year?: string;
   artwork?: string | null; // base64 image data URL or color string
+  lrcFilePath?: string;
   
   // System fields
+  startTime: number;
+  text: string;
   asset?: string;
   fileSize?: number;
   modifiedAt: number;

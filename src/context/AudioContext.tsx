@@ -5,17 +5,24 @@ import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-au
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Song } from '../types/song'; // Import shared type
 
+export interface LyricLine {
+  startTime: number;
+  text: string;
+}
+
 interface AudioContextType {
   isPlaying: boolean;
   isLooping: boolean;
   showOverlay: boolean;
   handleNext: () => void;
+  getLyricsForSong?: (songId: string) => Promise<LyricLine[] | null>; // Kept compatible as optional if handled elsewhere
   handlePrevious: () => void;
   toggleShuffle: () => void;
   isShuffled: boolean;
   toggleLike: () => void;
   isLiked: boolean;
   favoriteSongs: Song[];
+  getArtistSongCount: (artistName: string) => number;
   recentlyPlayed: Song[];
   progressWidth: SharedValue<number>;
   position: number;
@@ -47,7 +54,6 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   // Get the asset URI for the player
   const getAssetUri = (song: Song | null): string | null => {
     if (!song) return null;
-    // Use uri or asset property
     return song.uri || song.asset || null;
   };
 
@@ -56,6 +62,10 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   const progressWidth = useSharedValue(0);
 
   const isLiked = currentSong ? favoriteSongs.some(song => song.id === currentSong.id) : false;
+
+  const getArtistSongCount = (artistName: string): number => {
+    return tracks.filter(song => song.artist === artistName).length;
+  };
 
   // Load favorites and recently played from storage on mount
   useEffect(() => {
@@ -109,6 +119,50 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     configureAudio();
   }, []);
 
+  // Handle Forward Declaration References safely
+  const handlePlayPause = async (songParams?: any) => {
+    const targetSong = songParams || currentSong;
+
+    if (!targetSong) {
+      console.warn('Playback request canceled: No track is currently loaded.');
+      return;
+    }
+
+    const assetUri = getAssetUri(targetSong);
+    if (!assetUri) {
+      console.error('No asset URI discovered for track:', targetSong?.title || 'Unknown Title');
+      return;
+    }
+
+    if (targetSong.id !== currentSong?.id) {
+      setCurrentSong(targetSong);
+      addToRecentlyPlayed(targetSong);
+      player.replace(assetUri);
+      player.play();
+      return;
+    }
+
+    if (player.playing) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  };
+
+  const handleNext = () => {
+    if (tracks.length === 0 || !currentSong) return;
+    const currentIndex = tracks.findIndex(s => s.id === currentSong.id);
+    const nextIndex = (currentIndex + 1) % tracks.length;
+    handlePlayPause(tracks[nextIndex]);
+  };
+
+  const handlePrevious = () => {
+    if (tracks.length === 0 || !currentSong) return;
+    const currentIndex = tracks.findIndex(s => s.id === currentSong.id);
+    const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
+    handlePlayPause(tracks[prevIndex]);
+  };
+
   // Lock screen controls
   useEffect(() => {
     if (player && currentSong) {
@@ -117,7 +171,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
         artist: currentSong.artist || "Swayv",
       });
 
-      // @ts-ignore - event listeners for lock screen controls
+      // @ts-ignore
       const nextSubscription = player.addListener('playNextTrack', () => {
         handleNext();
       });
@@ -134,7 +188,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [currentSong, player, status.playing]);
 
-  // Update progress
+  // Update progress variables
   useEffect(() => {
     const currentPosMs = (status.currentTime || 0) * 1000;
     const totalDurationMs = status.duration > 0 ? status.duration * 1000 : 1;
@@ -159,31 +213,6 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const handlePlayPause = (song?: Song) => {
-    const targetSong = song || currentSong || tracks[0];
-    if (!targetSong) return;
-
-    const assetUri = getAssetUri(targetSong);
-    if (!assetUri) {
-      console.error('No asset URI for song:', targetSong.title);
-      return;
-    }
-
-    if (targetSong.id !== currentSong?.id) {
-      setCurrentSong(targetSong);
-      addToRecentlyPlayed(targetSong);
-      player.replace(assetUri);
-      player.play();
-      return;
-    }
-
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.play();
-    }
-  };
-
   const toggleRepeat = () => {
     player.loop = !player.loop;
   };
@@ -192,20 +221,6 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     const targetSeconds = Math.floor(millis / 1000);
     player.seekTo(targetSeconds);
     setPosition(millis);
-  };
-
-  const handleNext = () => {
-    if (tracks.length === 0 || !currentSong) return;
-    const currentIndex = tracks.findIndex(s => s.id === currentSong.id);
-    const nextIndex = (currentIndex + 1) % tracks.length;
-    handlePlayPause(tracks[nextIndex]);
-  };
-
-  const handlePrevious = () => {
-    if (tracks.length === 0 || !currentSong) return;
-    const currentIndex = tracks.findIndex(s => s.id === currentSong.id);
-    const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
-    handlePlayPause(tracks[prevIndex]);
   };
 
   const toggleShuffle = () => setIsShuffled(!isShuffled);
@@ -241,6 +256,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
       toggleLike,
       isLiked,
       favoriteSongs,
+      getArtistSongCount,
       recentlyPlayed,
       tracks,
       setTracks

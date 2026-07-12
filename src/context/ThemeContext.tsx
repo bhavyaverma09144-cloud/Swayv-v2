@@ -16,7 +16,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [currentThemeId, setCurrentThemeId] = useState<string>('silkLight');
+  const [currentThemeId, setCurrentThemeId] = useState<string>('obsidianVelvet');
   const availableThemes = Object.values(themes);
 
   // Load saved theme on mount

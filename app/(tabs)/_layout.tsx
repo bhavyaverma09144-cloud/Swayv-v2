@@ -1,11 +1,11 @@
-// app/(tabs)/_layout.tsx
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { Tabs, usePathname } from 'expo-router';
-import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { View, StyleSheet, Text, Pressable } from 'react-native';
+import { Tabs, usePathname, useRouter } from 'expo-router';
+import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { useSharedValue } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLibrary } from '../../src/context/LibraryContext';
 
 import { 
   useFonts, 
@@ -22,7 +22,7 @@ import { Syne_400Regular, Syne_700Bold } from '@expo-google-fonts/syne';
 
 import AnimatedButton from '../../src/components/AnimatedButton';
 import { useAppTheme } from '../../src/context/ThemeContext';
-import AudioPlayerOverlay from '../../src/components/AudioPlayerOverlay';
+import AudioPlayerOverlay from '../../src/components/AudioPlayerOverlay/index';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,17 +31,17 @@ const iconSpringConfig = { damping: 12, stiffness: 180, mass: 0.4 };
 
 function TabItem({ route, isFocused, onPress, activeColors }: any) {
   const labels: Record<string, string> = {
-    index: 'Home',
-    favorite: 'Favorite',
-    library: 'Library',
-    settings: 'Settings',
+    index: 'Songs',
+    favorite: 'Albums',
+    library: 'Artists',
+    settings: 'Playlists',
   };
 
   const icons: Record<string, string> = {
     index: 'musical-notes',
-    favorite: 'heart',
-    library: 'albums',
-    settings: 'settings',
+    favorite: 'albums',
+    library: 'people',
+    settings: 'list',
   };
 
   const label = labels[route.name] || route.name;
@@ -115,7 +115,10 @@ function CustomTabBar(props: any) {
 
 export default function TabsLayout() {
   const pathname = usePathname();
+  const router = useRouter();
   const expansionProgress = useSharedValue(0);
+  const { currentTheme: activeColors } = useAppTheme();
+  const { clearCacheAndRescan } = useLibrary();
 
   const [fontsLoaded, fontError] = useFonts({
     'AppFont-Light': PlusJakartaSans_300Light,
@@ -134,6 +137,15 @@ export default function TabsLayout() {
     'Mono-Bold': SpaceGrotesk_700Bold,
   });
 
+  const labels: Record<string, string> = {
+    '/': 'Songs',
+    '/favorite': 'Albums',
+    '/library': 'Artists',
+    '/settings': 'Playlists',
+  };
+
+  const currentHeaderTitle = labels[pathname] || 'Music';
+  
   useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
@@ -142,24 +154,53 @@ export default function TabsLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
-  // Check if current route is settings - hide overlay on settings
   const isSettings = pathname === '/settings';
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: activeColors.background }]} edges={['top']}>
+      {/* Global Persistent Header Section */}
+      <View style={[styles.headerContainer, { borderColor: activeColors.border, backgroundColor: activeColors.background }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Pressable 
+              style={[styles.utilityButton, { backgroundColor: activeColors.surface }]}
+              onPress={() => router.push('/settings')}
+            >
+              <Ionicons name="reorder-three" size={20} color={activeColors.textSecondary} />
+            </Pressable>
+            <Pressable onPress={clearCacheAndRescan} style={[styles.scanButton, { backgroundColor: activeColors.accent }]}>
+              <Ionicons name="refresh" size={20} color="#FFFFFF" />
+            </Pressable>
+          </View>
+
+          <Text style={[styles.title, { color: activeColors.textPrimary }]}>
+            {currentHeaderTitle}
+          </Text>
+
+          <View style={styles.headerRight}>
+            <Pressable 
+              style={[styles.utilityButton, { backgroundColor: activeColors.surface }]} 
+              onPress={() => router.setParams({ openSearch: 'true' })}
+            >
+              <Ionicons name="search" size={20} color={activeColors.textSecondary} />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
+      {/* Main Tabs Content Router Outlet */}
       <View style={styles.contentContainer}>
         <Tabs
           screenOptions={{ headerShown: false }}
           tabBar={(props) => <CustomTabBar {...props} />}
         />
       </View>
-      {/* Player overlay - positioned above tab bar */}
+
+      {/* Player overlay - visually sits under the navigation bar natively */}
       {!isSettings && (
-        <View style={styles.overlayWrapper}>
-          <AudioPlayerOverlay expansionProgress={expansionProgress} />
-        </View>
+        <AudioPlayerOverlay expansionProgress={expansionProgress} />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -168,15 +209,23 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
+  headerContainer: { 
+    height: 64,
+    borderBottomWidth: 1,
+  },
+  headerRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 24, 
+    height: '100%' 
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { fontSize: 20, letterSpacing: 0.3, fontFamily: 'Mono-Bold' },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  utilityButton: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   contentContainer: {
     flex: 1,
-  },
-  overlayWrapper: {
-    position: 'absolute',
-    bottom: 105, // Height of tab bar (adjust based on your tab bar height)
-    left: 0,
-    right: 0,
-    zIndex: -.5,
   },
   tabBarContainer: { 
     flexDirection: 'row', 
@@ -185,14 +234,15 @@ const styles = StyleSheet.create({
     paddingBottom: 25, 
     alignItems: 'center', 
     paddingHorizontal: 10,
-    zIndex: 1,
+    zIndex: 2,           // Kept elevated on top of PlayerOverlay
+    elevation: 2,
   },
   buttonWrapper: { 
     flex: 1, 
     alignItems: 'center', 
     justifyContent: 'center', 
     height: '100%', 
-    zIndex: 2
+    zIndex: 3
   },
   tabItemContainer: { 
     alignItems: 'center', 
@@ -220,4 +270,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     textAlign: 'center',
   },
+  scanButton: {
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40 ,
+  }
 });
